@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title></title>
+        <style>
+            #imgs {
+                border: 1px solid black;
+                overflow-y: auto;
+                height: auto;
+                min-height: 100px;
+                margin: 20px;
+                display: flex;
+            }
+            img {
+                height: 280px;
+                width: 190px;
+                margin: 10px;
+            }
+
+        </style>
+        <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
+
+    </head>
+    <body>
+        <script type="text/javascript">
+
+            var doc;
+            var generatedFiles;
+            var filesToGen;
+            window.jsPDF = window.jspdf.jsPDF;
+
+            window.addEventListener('load', function () {
+                init();
+
+                const fileSelector = document.getElementById('file-selector');
+
+                fileSelector.addEventListener('change', (event) => {
+                    const fileList = event.target.files;
+                    console.log(fileList);
+                    filesToGen = fileList.length;
+
+                    // Loop on files
+                    for (var i = 0; i < fileList.length; i++) {
+                        (function (file, i) {
+                            readImage(file, i);
+                        })(fileList[i], i);
+                    }
+
+                });
+
+            })
+
+            function readImage(file, i) {
+                console.log('file', file.type);
+
+                // Check if the file is an image.
+                if (file.type && !file.type.startsWith('image/')) {
+                    console.log('File is not an image.', file.type, file);
+                    return;
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        if (generatedFiles !== 0) {
+                            doc.addPage('a4', "portrait")
+                        }
+                        generatedFiles++;
+
+                        addImg(event.target.result);
+                        doc.addImage(event.target.result, "JPEG", 0, 0, 210, 297);
+                        if (filesToGen === generatedFiles) {
+                            document
+                                .getElementById('reset-btn')
+                                .style
+                                .display = 'block';
+                            document
+                                .getElementById('dl-btn')
+                                .style
+                                .display = 'block';
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+
+            }
+
+            function download() {
+                doc.save("doc.pdf");
+            }
+
+            function init() {
+                document
+                    .getElementById('file-selector')
+                    .value = "";
+                document
+                    .getElementById('imgs')
+                    .innerHTML = "";
+                doc = new jsPDF();
+                generatedFiles = 0;
+                filesToGen = 0;
+            }
+
+            function addImg(src) {
+                var img = document.createElement("img");
+                img.src = src;
+                var src = document.getElementById("imgs");
+                src.appendChild(img);
+            }
+        </script>
+        <h1>Generate A4 portrait pdf from images</h1>
+        <p>Select files:</p>
+        <input type="file" id="file-selector" multiple>
+        <p>Preview:</p>
+        <div id="imgs"></div>
+        <button id="reset-btn" onclick="init();" style="display:none;">Reset</button>
+        <button id="dl-btn" onclick="download();" style="display:none;">Download pdf</button>
+
+    </body>
+</html>
